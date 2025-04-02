@@ -3,7 +3,7 @@ module W8 where
 -- import Prelude hiding ((+))
 import BinaryArithmetic
 
-data W8 = W8 Bit Bit Bit Bit Bit Bit Bit Bit deriving Eq
+data W8 = W8 Bit Bit Bit Bit Bit Bit Bit Bit deriving Eq 
 
 -- instance Show W8 where
 --   show (W8 b7 b6 b5 b4 b3 b2 b1 b0) = "0b" ++ show b7 ++ show b6 ++ show b5 ++ show b4 ++ show b3 ++ show b2 ++ show b1 ++ show b0
