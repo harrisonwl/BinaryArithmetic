@@ -26,8 +26,8 @@ source-repository head
 library
   exposed-modules:
       BinaryArithmetic
-      Lib
       W32
+      W6
       W64
       W8
   other-modules:
