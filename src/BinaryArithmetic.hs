@@ -1,42 +1,43 @@
 module BinaryArithmetic where 
 
-import Prelude hiding ((||) , (&&) , negate)
+import Prelude hiding ((||) , (&&) , negate , (+))
 
 data Bit = C | S deriving (Eq,Read)
 instance Show Bit where
   show C = "0"
   show S = "1"
 
-(>&&<) :: Bit -> Bit -> Bit
-S >&&< S = S
-_ >&&< _ = C
+-- logical and
+(<&&>) :: Bit -> Bit -> Bit
+S <&&> S = S
+_ <&&> _ = C
 
-(>||<) :: Bit -> Bit -> Bit
-C >||< C = C
-_ >||< _ = S
+-- logical inclusive or
+(<||>) :: Bit -> Bit -> Bit
+C <||> C = C
+_ <||> _ = S
 
-(>^<) :: Bit -> Bit -> Bit
-C >^< S = S
-S >^< C = S
-_ >^< _ = C
+-- logical exclusive or
+(<|*|>) :: Bit -> Bit -> Bit
+C <|*|> S = S
+S <|*|> C = S
+_ <|*|> _ = C
 
 class BinaryArith w where
-   (<+>)      :: w -> w -> w          -- definable by carryadd
+   (+)      :: w -> w -> w          -- definable by carryadd
    carryadd   :: w -> w -> Bit -> (w , Bit)
    leastbit   :: w -> Bit
-   -- (&&)      :: w -> w -> w          -- bitwise and
-   -- (||)      :: w -> w -> w          -- inclusive or
-   -- (|*|)      :: w -> w -> w         -- exclusive or
-   (<||>)     :: w -> w -> w  -- Bitwise OR
-   (<&&>)     :: w -> w -> w  -- Bitwise AND
-   (<^>)      :: w -> w -> w  -- Bitwise XOR
-   bitwiseneg :: w -> w
+   (^)        :: w -> w -> w          -- bitwise exclusive or
+   (.&.)       :: w -> w -> w          -- bitwise and
+   (||)       :: w -> w -> w          -- bitwise inclusive or
+   bnot       :: w -> w
    shiftl     :: (w , Bit) -> (Bit , w) 
    shiftr     :: (Bit, w) -> (w, Bit) 
    rshift     :: (w,w) -> (w,w,Bit)   -- definable by shiftr 
    zero, one  :: w
    booth      :: (w,w) -> (w,w)
    signbit    :: w -> Bit
+   lit        :: Integer -> w
 
 class BinaryArith w => ToBits w where
   tobits :: w -> [Bit]
@@ -44,8 +45,21 @@ class BinaryArith w => ToBits w where
 showBits :: [Bit] -> String
 showBits bs = "0b" ++ foldr (++) "" (map show bs)
 
-(>>>) :: BinaryArith w => w -> Int -> w
-w >>> n = compose (nrepeat n rs) w
+-- (>>>) :: BinaryArith w => w -> Int -> w
+-- w >>> n = compose (nrepeat n rs) w
+--    where
+--      rs :: BinaryArith w => w -> w
+--      rs w = let
+--               (_ , w1 , _) = rshift (zero , w)
+--             in
+--               w1
+--      compose [] = id
+--      compose (f : fs) = f . compose fs
+--      nrepeat 0 x = []
+--      nrepeat n x = x : nrepeat (n - 1) x
+
+(>>.) :: BinaryArith w => w -> Int -> w
+w >>. n = compose (nrepeat n rs) w
    where
      rs :: BinaryArith w => w -> w
      rs w = let
@@ -100,10 +114,10 @@ bitplus S S C = (S,C)
 bitplus S S S = (S,S)
 
 negate :: BinaryArith w => w -> w
-negate w = (bitwiseneg w) <+> one
+negate w = (bnot w) + one
 
 (<->) :: BinaryArith w => w -> w -> w
-w1 <-> w2 = w1 <+> (negate w2)
+w1 <-> w2 = w1 + (negate w2)
 
 (<*>) :: BinaryArith w => w -> w -> w
 w1 <*> w2 = snd (booth (w1,w2))
@@ -123,7 +137,7 @@ boothround (a,q,q_1,m) = let
 
       (C,S) -> (a'', q',q_1',m)     -- A + M
         where
-          a'            = a <+> m
+          a'            = a + m
           (a'',q',q_1') = rshift (a',q)
 
       (S,S) -> (a',q',q_1',m)
@@ -163,4 +177,3 @@ class ShowBin w where
 
 hexify :: [Bit] -> String
 hexify bits = map toHex (reverse (fours C (reverse bits)))
-

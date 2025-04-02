@@ -1,5 +1,6 @@
 module W32 where
 
+-- import Prelude hiding ((^))
 import BinaryArithmetic
 
 data W32 = W32 !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit
@@ -8,17 +9,9 @@ data W32 = W32 !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit !Bit 
 
 instance Show W32 where
   show = xshow
-  -- show (W32 b31 b30 b29 b28 b27 b26 b25 b24 b23 b22 b21 b20 b19 b18 b17
-  --           b16 b15 b14 b13 b12 b11 b10 b09 b08 b07 b06 b05 b04 b03 b02 b01 b00) = 
-  --         "0b" ++ show b31 ++ show b30 ++ show b29 ++ show b28 ++ show b27 ++ show b26
-  --              ++ show b25 ++ show b24 ++ show b23 ++ show b22 ++ show b21 ++ show b20
-  --              ++ show b19 ++ show b18 ++ show b17 ++ show b16 ++ show b15 ++ show b14
-  --              ++ show b13 ++ show b12 ++ show b11 ++ show b10 ++ show b09 ++ show b08
-  --              ++ show b07 ++ show b06 ++ show b05 ++ show b04 ++ show b03 ++ show b02
-  --              ++ show b01 ++ show b00
 
 instance Num W32 where
-  (+)         = (<+>)
+  (+)         = (BinaryArithmetic.+)
   (*)         = (BinaryArithmetic.<*>)
   abs w32      = case signbit w32 of
     C -> w32
@@ -27,7 +20,7 @@ instance Num W32 where
     C -> one
     S -> BinaryArithmetic.negate one
   fromInteger i | i>=0 = i'
-                | i<0  = (bitwiseneg i') <+> one
+                | i<0  = (bnot i') BinaryArithmetic.+ one
     where
       [b30,b29,b28,b27,b26,b25,b24,b23,b22,b21,
        b20,b19,b18,b17,b16,b15,b14,b13,b12,b11,
@@ -36,7 +29,7 @@ instance Num W32 where
   negate      = BinaryArithmetic.negate
 
 instance BinaryArith W32 where
-  a32 <+> b32 = fst (carryadd a32 b32 C)
+  a32 + b32 = fst (carryadd a32 b32 C)
   carryadd (W32 a31 a30 a29 a28 a27 a26 a25 a24 a23 a22 a21 a20 a19 a18 a17 a16 a15 a14 a13 a12 a11 a10 a9 a8 a7 a6 a5 a4 a3 a2 a1 a0) (W32 b31 b30 b29 b28 b27 b26 b25 b24 b23 b22 b21 b20 b19 b18 b17 b16 b15 b14 b13 b12 b11 b10 b9 b8 b7 b6 b5 b4 b3 b2 b1 b0) c = (W32 c31 c30 c29 c28 c27 c26 c25 c24 c23 c22 c21 c20 c19 c18 c17 c16 c15 c14 c13 c12 c11 c10 c9 c8 c7 c6 c5 c4 c3 c2 c1 c0 , c')
     where
       (carry0,c0) = bitplus a0 b0 c
@@ -83,7 +76,7 @@ instance BinaryArith W32 where
                 b7 b6 b5 b4
                 b3 b2 b1 b0) = b0
 
-  bitwiseneg (W32 b31 b30 b29 b28
+  bnot (W32 b31 b30 b29 b28
                 b27 b26 b25 b24
                 b23 b22 b21 b20
                 b19 b18 b17 b16
@@ -169,43 +162,46 @@ instance BinaryArith W32 where
                 b11 b10 b9 b8
                 b7 b6 b5 b4
                 b3 b2 b1 b0) = b31
-  (<||>) (W32 a31 a30 a29 a28 a27 a26 a25 a24 a23 a22 a21 a20 a19 a18 a17 a16
+  -- | Bitwise Inclusive Or
+  (||) (W32 a31 a30 a29 a28 a27 a26 a25 a24 a23 a22 a21 a20 a19 a18 a17 a16
             a15 a14 a13 a12 a11 a10 a09 a08 a07 a06 a05 a04 a03 a02 a01 a00)
        (W32 b31 b30 b29 b28 b27 b26 b25 b24 b23 b22 b21 b20 b19 b18 b17 b16
             b15 b14 b13 b12 b11 b10 b09 b08 b07 b06 b05 b04 b03 b02 b01 b00)
-        = W32 (a31 >||< b31) (a30 >||< b30) (a29 >||< b29) (a28 >||< b28)
-              (a27 >||< b27) (a26 >||< b26) (a25 >||< b25) (a24 >||< b24)
-              (a23 >||< b23) (a22 >||< b22) (a21 >||< b21) (a20 >||< b20)
-              (a19 >||< b19) (a18 >||< b18) (a17 >||< b17) (a16 >||< b16)
-              (a15 >||< b15) (a14 >||< b14) (a13 >||< b13) (a12 >||< b12)
-              (a11 >||< b11) (a10 >||< b10) (a09 >||< b09) (a08 >||< b08)
-              (a07 >||< b07) (a06 >||< b06) (a05 >||< b05) (a04 >||< b04)
-              (a03 >||< b03) (a02 >||< b02) (a01 >||< b01) (a00 >||< b00)
-  (<^>) (W32 a31 a30 a29 a28 a27 a26 a25 a24 a23 a22 a21 a20 a19 a18 a17 a16
+        = W32 (a31 <||> b31) (a30 <||> b30) (a29 <||> b29) (a28 <||> b28)
+              (a27 <||> b27) (a26 <||> b26) (a25 <||> b25) (a24 <||> b24)
+              (a23 <||> b23) (a22 <||> b22) (a21 <||> b21) (a20 <||> b20)
+              (a19 <||> b19) (a18 <||> b18) (a17 <||> b17) (a16 <||> b16)
+              (a15 <||> b15) (a14 <||> b14) (a13 <||> b13) (a12 <||> b12)
+              (a11 <||> b11) (a10 <||> b10) (a09 <||> b09) (a08 <||> b08)
+              (a07 <||> b07) (a06 <||> b06) (a05 <||> b05) (a04 <||> b04)
+              (a03 <||> b03) (a02 <||> b02) (a01 <||> b01) (a00 <||> b00)
+  -- | Bitwise Exclusive Or.
+  (^) (W32 a31 a30 a29 a28 a27 a26 a25 a24 a23 a22 a21 a20 a19 a18 a17 a16
             a15 a14 a13 a12 a11 a10 a09 a08 a07 a06 a05 a04 a03 a02 a01 a00)
        (W32 b31 b30 b29 b28 b27 b26 b25 b24 b23 b22 b21 b20 b19 b18 b17 b16
             b15 b14 b13 b12 b11 b10 b09 b08 b07 b06 b05 b04 b03 b02 b01 b00)
-        = W32 (a31 >^< b31) (a30 >^< b30) (a29 >^< b29) (a28 >^< b28)
-              (a27 >^< b27) (a26 >^< b26) (a25 >^< b25) (a24 >^< b24)
-              (a23 >^< b23) (a22 >^< b22) (a21 >^< b21) (a20 >^< b20)
-              (a19 >^< b19) (a18 >^< b18) (a17 >^< b17) (a16 >^< b16)
-              (a15 >^< b15) (a14 >^< b14) (a13 >^< b13) (a12 >^< b12)
-              (a11 >^< b11) (a10 >^< b10) (a09 >^< b09) (a08 >^< b08)
-              (a07 >^< b07) (a06 >^< b06) (a05 >^< b05) (a04 >^< b04)
-              (a03 >^< b03) (a02 >^< b02) (a01 >^< b01) (a00 >^< b00)
-  (<&&>) (W32 a31 a30 a29 a28 a27 a26 a25 a24 a23 a22 a21 a20 a19 a18 a17 a16
+        = W32 (a31 <|*|> b31) (a30 <|*|> b30) (a29 <|*|> b29) (a28 <|*|> b28)
+              (a27 <|*|> b27) (a26 <|*|> b26) (a25 <|*|> b25) (a24 <|*|> b24)
+              (a23 <|*|> b23) (a22 <|*|> b22) (a21 <|*|> b21) (a20 <|*|> b20)
+              (a19 <|*|> b19) (a18 <|*|> b18) (a17 <|*|> b17) (a16 <|*|> b16)
+              (a15 <|*|> b15) (a14 <|*|> b14) (a13 <|*|> b13) (a12 <|*|> b12)
+              (a11 <|*|> b11) (a10 <|*|> b10) (a09 <|*|> b09) (a08 <|*|> b08)
+              (a07 <|*|> b07) (a06 <|*|> b06) (a05 <|*|> b05) (a04 <|*|> b04)
+              (a03 <|*|> b03) (a02 <|*|> b02) (a01 <|*|> b01) (a00 <|*|> b00)
+  (.&.) (W32 a31 a30 a29 a28 a27 a26 a25 a24 a23 a22 a21 a20 a19 a18 a17 a16
               a15 a14 a13 a12 a11 a10 a09 a08 a07 a06 a05 a04 a03 a02 a01 a00)
        (W32 b31 b30 b29 b28 b27 b26 b25 b24 b23 b22 b21 b20 b19 b18 b17 b16
             b15 b14 b13 b12 b11 b10 b09 b08 b07 b06 b05 b04 b03 b02 b01 b00)
-        = W32 (a31 >&&< b31) (a30 >&&< b30) (a29 >&&< b29) (a28 >&&< b28)
-              (a27 >&&< b27) (a26 >&&< b26) (a25 >&&< b25) (a24 >&&< b24)
-              (a23 >&&< b23) (a22 >&&< b22) (a21 >&&< b21) (a20 >&&< b20)
-              (a19 >&&< b19) (a18 >&&< b18) (a17 >&&< b17) (a16 >&&< b16)
-              (a15 >&&< b15) (a14 >&&< b14) (a13 >&&< b13) (a12 >&&< b12)
-              (a11 >&&< b11) (a10 >&&< b10) (a09 >&&< b09) (a08 >&&< b08)
-              (a07 >&&< b07) (a06 >&&< b06) (a05 >&&< b05) (a04 >&&< b04)
-              (a03 >&&< b03) (a02 >&&< b02) (a01 >&&< b01) (a00 >&&< b00)
-
+        = W32 (a31 <&&> b31) (a30 <&&> b30) (a29 <&&> b29) (a28 <&&> b28)
+              (a27 <&&> b27) (a26 <&&> b26) (a25 <&&> b25) (a24 <&&> b24)
+              (a23 <&&> b23) (a22 <&&> b22) (a21 <&&> b21) (a20 <&&> b20)
+              (a19 <&&> b19) (a18 <&&> b18) (a17 <&&> b17) (a16 <&&> b16)
+              (a15 <&&> b15) (a14 <&&> b14) (a13 <&&> b13) (a12 <&&> b12)
+              (a11 <&&> b11) (a10 <&&> b10) (a09 <&&> b09) (a08 <&&> b08)
+              (a07 <&&> b07) (a06 <&&> b06) (a05 <&&> b05) (a04 <&&> b04)
+              (a03 <&&> b03) (a02 <&&> b02) (a01 <&&> b01) (a00 <&&> b00)
+  lit = toW32 -- fromInteger
+    
 instance ShowBin W32 where
   bshow (W32 b31 
              b30 b29 b28 b27 b26 b25 b24 b23 b22 b21 
@@ -216,6 +212,35 @@ instance ShowBin W32 where
                 b30,b29,b28,b27,b26,b25,b24,b23,b22,b21,
                 b20,b19,b18,b17,b16,b15,b14,b13,b12,b11,
                 b10,b9,b8,b7,b6,b5,b4,b3,b2,b1,b0]
+
+
+rotateR :: W32 -> W32
+rotateR (W32 b31 b30 b29 b28 b27 b26 b25 b24
+             b23 b22 b21 b20 b19 b18 b17 b16
+             b15 b14 b13 b12 b11 b10 b9  b8
+             b7  b6  b5  b4  b3  b2  b1  b0) = 
+                (W32 b0 b31 b30 b29 b28 b27 b26 b25 b24
+                     b23 b22 b21 b20 b19 b18 b17 b16
+                     b15 b14 b13 b12 b11 b10 b9  b8
+                     b7  b6  b5  b4  b3  b2  b1)
+
+rotateL :: W32 -> W32
+rotateL (W32 b31 b30 b29 b28 b27 b26 b25 b24
+             b23 b22 b21 b20 b19 b18 b17 b16
+             b15 b14 b13 b12 b11 b10 b9  b8
+             b7  b6  b5  b4  b3  b2  b1  b0) = 
+                (W32 b30 b29 b28 b27 b26 b25 b24
+                     b23 b22 b21 b20 b19 b18 b17 b16
+                     b15 b14 b13 b12 b11 b10 b9  b8
+                     b7  b6  b5  b4  b3  b2  b1 b0 b31)
+
+rotR :: W32 -> Int -> W32
+rotR w32 n | n <= 0    = w32
+           | otherwise = rotR (rotateR w32) (n-1)
+
+rotL :: W32 -> Int -> W32
+rotL w32 n | n <= 0    = w32
+           | otherwise = rotL (rotateL w32) (n-1)
 
 instance ShowHex W32 where
   xshow (W32 b31 b30 b29 b28
@@ -248,14 +273,15 @@ instance ToBits W32 where
                 b20,b19,b18,b17,b16,b15,b14,b13,b12,b11,
                 b10,b9,b8,b7,b6,b5,b4,b3,b2,b1,b0]
 
-
+{-
 x0 :: W32
 x0 = fromInteger 99
 
 e0 :: W32
 e0 = fromInteger $ 1 + 2 + 4 + 8 + 16 + 32 + 64 + 128 + 256 + 512 + 1024
-sanitye0 = [e0 >>> 0 , e0 >>> 1 ,e0 >>> 2 , e0 >>> 3 , e0 >>> 4 ,e0 >>> 5]
+sanitye0 = [e0 >>. 0 , e0 >>. 1 ,e0 >>. 2 , e0 >>. 3 , e0 >>. 4 ,e0 >>. 5]
 xsanitye0 = map xshow sanitye0
+-}
 
 toW32 :: Integer -> W32
 toW32 i = (W32 b31 
@@ -270,14 +296,14 @@ toW32 i = (W32 b31
 fromW32 :: W32 -> Integer
 fromW32 (W32 b31 b30 b29 b28 b27 b26 b25 b24 b23 b22 b21 b20 b19 b18 b17 b16
              b15 b14 b13 b12 b11 b10 b9 b8 b7 b6 b5 b4 b3 b2 b1 b0)
-                  = (b2i b31 * 2^31) + (b2i b30 * 2^30)  + (b2i b29 * 2^29) + (b2i b28 * 2^28) +
-                    (b2i b27 * 2^27) + (b2i b26 * 2^26)  + (b2i b25 * 2^25) + (b2i b24 * 2^24) +
-                    (b2i b23 * 2^23) + (b2i b22 * 2^22)  + (b2i b21 * 2^21) + (b2i b20 * 2^20) +
-                    (b2i b19 * 2^19) + (b2i b18 * 2^18)  + (b2i b17 * 2^17) + (b2i b16 * 2^16) +
-                    (b2i b15 * 2^15) + (b2i b14 * 2^14)  + (b2i b13 * 2^13) + (b2i b12 * 2^12) +
-                    (b2i b11 * 2^11) + (b2i b10 * 2^10)  + (b2i b9 * 2^9) + (b2i b8 * 2^8) +
-                    (b2i b7 * 2^7) + (b2i b6 * 2^6)  + (b2i b5 * 2^5) + (b2i b4 * 2^4) +
-                    (b2i b3 * 2^3) + (b2i b2 * 2^2)  + (b2i b1 * 2^1) + (b2i b0 * 2^0)
+                  = (b2i b31 * 2 Prelude.^ 31) Prelude.+ (b2i b30 * 2 Prelude.^ 30)  Prelude.+ (b2i b29 * 2 Prelude.^ 29) Prelude.+ (b2i b28 * 2 Prelude.^ 28) Prelude.+
+                    (b2i b27 * 2 Prelude.^ 27) Prelude.+ (b2i b26 * 2 Prelude.^ 26)  Prelude.+ (b2i b25 * 2 Prelude.^ 25) Prelude.+ (b2i b24 * 2 Prelude.^ 24) Prelude.+
+                    (b2i b23 * 2 Prelude.^ 23) Prelude.+ (b2i b22 * 2 Prelude.^ 22)  Prelude.+ (b2i b21 * 2 Prelude.^ 21) Prelude.+ (b2i b20 * 2 Prelude.^ 20) Prelude.+
+                    (b2i b19 * 2 Prelude.^ 19) Prelude.+ (b2i b18 * 2 Prelude.^ 18)  Prelude.+ (b2i b17 * 2 Prelude.^ 17) Prelude.+ (b2i b16 * 2 Prelude.^ 16) Prelude.+
+                    (b2i b15 * 2 Prelude.^ 15) Prelude.+ (b2i b14 * 2 Prelude.^ 14)  Prelude.+ (b2i b13 * 2 Prelude.^ 13) Prelude.+ (b2i b12 * 2 Prelude.^ 12) Prelude.+
+                    (b2i b11 * 2 Prelude.^ 11) Prelude.+ (b2i b10 * 2 Prelude.^ 10)  Prelude.+ (b2i b9 * 2 Prelude.^ 9) Prelude.+ (b2i b8 * 2 Prelude.^ 8) Prelude.+
+                    (b2i b7 * 2 Prelude.^ 7) Prelude.+ (b2i b6 * 2 Prelude.^ 6)  Prelude.+ (b2i b5 * 2 Prelude.^ 5) Prelude.+ (b2i b4 * 2 Prelude.^ 4) Prelude.+
+                    (b2i b3 * 2 Prelude.^ 3) Prelude.+ (b2i b2 * 2 Prelude.^ 2)  Prelude.+ (b2i b1 * 2 Prelude.^ 1) Prelude.+ (b2i b0 * 2 Prelude.^ 0)
 
 b2i :: Bit -> Integer
 b2i S = 1
@@ -317,5 +343,8 @@ instance (Eq a, Eq b, Eq c, Eq d, Eq e, Eq f, Eq g, Eq h,
           Eq i, Eq j, Eq k, Eq l, Eq m, Eq n, Eq o, Eq p) =>
          Eq (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) where
   (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p) == (a', b', c', d', e', f', g', h', i', j', k', l', m', n', o', p')
-       = a==a' && b==b' && c==c' && d==d' && e==e' && f==f' && g==g' && h==h'
-               && i==i' && j==j' && k==k' && l==l' && m==m' && n==n' && o==o' && p==p'
+       = a==a' Prelude.&& b==b' Prelude.&& c==c' Prelude.&& d==d' Prelude.&& e==e' Prelude.&& f==f' Prelude.&& g==g' Prelude.&& h==h'
+               Prelude.&& i==i' Prelude.&& j==j' Prelude.&& k==k' Prelude.&& l==l' Prelude.&& m==m' Prelude.&& n==n' Prelude.&& o==o' Prelude.&& p==p'
+
+myand :: W32 -> W32 -> W32
+myand = (.&.)
