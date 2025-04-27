@@ -234,13 +234,13 @@ rotateL (W32 b31 b30 b29 b28 b27 b26 b25 b24
                      b15 b14 b13 b12 b11 b10 b9  b8
                      b7  b6  b5  b4  b3  b2  b1 b0 b31)
 
-rotR :: W32 -> Int -> W32
-rotR w32 n | n <= 0    = w32
-           | otherwise = rotR (rotateR w32) (n-1)
+rotR :: Integer -> W32 -> W32
+rotR n w32 | n <= 0    = w32
+           | otherwise = rotR (n-1) (rotateR w32)
 
-rotL :: W32 -> Int -> W32
-rotL w32 n | n <= 0    = w32
-           | otherwise = rotL (rotateL w32) (n-1)
+rotL :: Integer -> W32 -> W32
+rotL n w32 | n <= 0    = w32
+           | otherwise = rotL (n-1) (rotateL w32)
 
 instance ShowHex W32 where
   xshow (W32 b31 b30 b29 b28

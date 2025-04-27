@@ -84,9 +84,9 @@ instance BinaryArith W6 where
       ,
             W6 a4 a3 a2 a1 a0 q
       )
-  lit = toW32 -- fromInteger 
+  lit = toW6 -- fromInteger 
 
-toW32 :: Integer -> W6
-toW32 i = (W6 b5 b4 b3 b2 b1 b0)
+toW6 :: Integer -> W6
+toW6 i = (W6 b5 b4 b3 b2 b1 b0)
       where
         [b5, b4, b3, b2, b1, b0] = pad_or_trunc 6 i
